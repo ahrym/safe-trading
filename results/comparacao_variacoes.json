@@ -1,0 +1,67 @@
+{
+  "descricao": "Comparação de variações de parâmetros — Safe Trading F3.2",
+  "mercado": "BTC/USDT 4H (2022-01-01 a 2026-06-27)",
+  "capital_inicial": 1000.0,
+  "variacoes": [
+    {
+      "variacao": "Baseline (EMA 8/21, RSI 40-65, TP 3.0)",
+      "ema_rapida": 8,
+      "ema_lenta": 21,
+      "rsi_min": 40,
+      "rsi_max": 65,
+      "tp_mult": 3.0,
+      "total_trades": 77,
+      "win_rate_pct": 40.26,
+      "profit_factor": 1.288,
+      "sharpe_ratio": 0.4623,
+      "max_drawdown_pct": 4.7,
+      "retorno_total_pct": 5.03,
+      "capital_final": 1050.34
+    },
+    {
+      "variacao": "V1 — EMA Conservadora (13/21, RSI 45-65, TP 3.0)",
+      "ema_rapida": 13,
+      "ema_lenta": 21,
+      "rsi_min": 45,
+      "rsi_max": 65,
+      "tp_mult": 3.0,
+      "total_trades": 72,
+      "win_rate_pct": 25.0,
+      "profit_factor": 0.6289,
+      "sharpe_ratio": -0.7633,
+      "max_drawdown_pct": 8.1,
+      "retorno_total_pct": -6.95,
+      "capital_final": 930.51
+    },
+    {
+      "variacao": "V2 — TP Menor (8/21, RSI 40-65, TP 2.0)",
+      "ema_rapida": 8,
+      "ema_lenta": 21,
+      "rsi_min": 40,
+      "rsi_max": 65,
+      "tp_mult": 2.0,
+      "total_trades": 77,
+      "win_rate_pct": 46.75,
+      "profit_factor": 1.156,
+      "sharpe_ratio": 0.2828,
+      "max_drawdown_pct": 4.22,
+      "retorno_total_pct": 2.41,
+      "capital_final": 1024.08
+    },
+    {
+      "variacao": "V3 — Combinada (10/21, RSI 42-70, TP 2.5)",
+      "ema_rapida": 10,
+      "ema_lenta": 21,
+      "rsi_min": 42,
+      "rsi_max": 70,
+      "tp_mult": 2.5,
+      "total_trades": 89,
+      "win_rate_pct": 33.71,
+      "profit_factor": 0.9178,
+      "sharpe_ratio": -0.1549,
+      "max_drawdown_pct": 5.51,
+      "retorno_total_pct": -1.75,
+      "capital_final": 982.53
+    }
+  ]
+}

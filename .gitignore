@@ -1,0 +1,47 @@
+# ─────────────────────────────────────────────────────────────
+# Safe Trading — Arquivos ignorados pelo Git
+# ─────────────────────────────────────────────────────────────
+
+# Variáveis de ambiente (NUNCA commite suas chaves de API!)
+.env
+
+# Cache do Python (gerado automaticamente, não precisa versionar)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Dados históricos brutos (grande — regenerável via fetch_data.py)
+data/*.csv
+data/*.png
+
+# Resultados de backtest (regeneráveis)
+results/*.png
+
+# Ambiente virtual Python (cada dev cria o próprio com pip install)
+venv/
+env/
+.venv/
+
+# Jupyter Notebooks — checkpoints automáticos
+.ipynb_checkpoints/
+.jupyter/
+
+# Arquivos de build Python
+*.egg-info/
+dist/
+build/
+
+# Logs e arquivos temporários
+*.log
+*.tmp
+
+# Configurações de IDEs (VS Code, PyCharm, etc.)
+.vscode/
+.idea/
+*.swp
+
+# Sistema operacional
+.DS_Store          # macOS
+Thumbs.db          # Windows
+desktop.ini        # Windows

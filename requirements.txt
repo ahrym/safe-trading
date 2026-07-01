@@ -1,0 +1,43 @@
+# =============================================================================
+# Safe Trading — Dependências Python
+# =============================================================================
+# Instale com: pip install -r requirements.txt
+# Requer Python 3.11+
+
+# Dashboard web interativo
+dash>=2.14.0
+dash-bootstrap-components>=1.5.0
+
+# Gráficos interativos
+plotly>=5.18.0
+
+# Manipulação de dados em tabelas (DataFrames)
+pandas>=2.0.0
+
+# Requisições HTTP (buscar preços da Binance)
+requests>=2.31.0
+
+# Scheduler em background (roda job a cada 4h)
+apscheduler>=3.10.0
+
+# Integração com Supabase (banco de dados cloud)
+# Usado apenas em produção — fallback local funciona sem esta lib
+supabase>=2.3.0
+
+# Flask (servidor web do Dash — já vem como dependência do Dash)
+flask>=3.0.0
+
+# Carrega variáveis de ambiente do arquivo .env
+python-dotenv>=1.0.0
+
+# Acesso a exchanges de criptomoedas (Binance, etc.) — usado nos scripts de backtest
+ccxt>=4.0.0
+
+# Indicadores técnicos para pandas (EMA, RSI, MACD, etc.)
+pandas-ta>=0.3.14b
+
+# Operações numéricas de alta performance
+numpy>=1.24.0
+
+# Notebooks interativos para exploração de dados
+jupyter>=1.0.0
