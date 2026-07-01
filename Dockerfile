@@ -24,4 +24,4 @@ RUN mkdir -p /app/results /app/data
 EXPOSE 8050
 
 # Comando de inicialização
-CMD ["python", "dashboard.py"]
+CMD ["gunicorn", "--workers", "2", "--threads", "2", "--bind", "0.0.0.0:8080", "--timeout", "120", "dashboard:server"]
