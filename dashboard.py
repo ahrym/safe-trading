@@ -206,7 +206,8 @@ def carregar_dados_btc():
         for col in ["open", "high", "low", "close", "volume"]:
             df[col] = df[col].astype(float)
         return df.sort_values("timestamp").reset_index(drop=True)
-    except Exception:
+    except Exception as e:
+        print(f"[ERRO] carregar_dados_btc: {e}")
         return pd.DataFrame()
 
 
@@ -641,7 +642,7 @@ def criar_grafico_btc(preco_atual=None):
 
     if df.empty:
         fig = go.Figure()
-        fig.add_annotation(text="CSV não encontrado: data/btc_usdt_4h.csv", showarrow=False, font=dict(color=COR_CINZA, size=14), x=0.5, y=0.5)
+        fig.add_annotation(text="Aguardando dados da Binance...", showarrow=False, font=dict(color=COR_CINZA, size=14), x=0.5, y=0.5)
         fig.update_layout(**LAYOUT_GRAFICO, height=600)
         return fig
 
