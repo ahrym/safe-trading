@@ -1228,9 +1228,10 @@ def job_atualizar_sinais():
 # =============================================================================
 
 _scheduler = BackgroundScheduler(daemon=True)
-_scheduler.add_job(job_atualizar_sinais, "interval", hours=4, id="sinais_4h")
+_scheduler.add_job(job_atualizar_sinais, "interval", hours=4, id="sinais_4h",
+                   next_run_time=None)  # não roda imediatamente no startup
 _scheduler.start()
-print("[Scheduler] Iniciado — job de sinais a cada 4 horas")
+print("[Scheduler] Iniciado — primeiro job em 4 horas")
 
 
 # =============================================================================

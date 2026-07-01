@@ -4,5 +4,5 @@ builder = "DOCKERFILE"
 [deploy]
 startCommand = "python dashboard.py"
 healthcheckPath = "/"
-healthcheckTimeout = 30
+healthcheckTimeout = 120
 restartPolicyType = "ON_FAILURE"
