@@ -23,7 +23,8 @@ No dashboard, abra a aba **"Freqtrade Live"** — deve mostrar status, capital e
 
 ## Credenciais da API Freqtrade
 
-- Usuário: `freqtrade`
-- Senha: `safetrading123`
+As credenciais estão definidas em `freqtrade/config.json` (variáveis `api_server.username` e `api_server.password`).
+Para produção real, mova-as para variáveis de ambiente no Railway e referencie via `${FREQTRADE_API_USER}` / `${FREQTRADE_API_PASSWORD}`.
+
 - Endpoint de status: `GET /api/v1/status` (com Basic Auth)
 - Ping (requer auth): `GET /api/v1/ping`
