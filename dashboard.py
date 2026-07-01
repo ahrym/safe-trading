@@ -882,9 +882,17 @@ DASHBOARD_PASSWORD = os.environ.get("DASHBOARD_PASSWORD", "safetrading123")
 
 server = app.server  # Expõe o Flask server do Dash
 
+@server.route("/health")
+def health_check():
+    """Rota pública para healthcheck do Railway — sem autenticação."""
+    return "ok", 200
+
+
 @server.before_request
 def verificar_auth():
     """Exige autenticação HTTP Basic para acessar qualquer rota."""
+    if request.path == "/health":
+        return  # healthcheck passa sem auth
     auth = request.authorization
     if not auth or auth.username != DASHBOARD_USER or auth.password != DASHBOARD_PASSWORD:
         return Response(
