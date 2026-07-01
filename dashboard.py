@@ -189,25 +189,53 @@ def buscar_preco_btc():
         return None
 
 
+def _parse_binance_klines(raw):
+    df = pd.DataFrame(raw, columns=[
+        "timestamp", "open", "high", "low", "close", "volume",
+        "close_time", "quote_volume", "trades", "taker_buy_base",
+        "taker_buy_quote", "ignore"
+    ])
+    df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms")
+    for col in ["open", "high", "low", "close", "volume"]:
+        df[col] = df[col].astype(float)
+    return df.sort_values("timestamp").reset_index(drop=True)
+
+
 def carregar_dados_btc():
-    """Busca candles BTC/USDT 4h direto da Binance (sem CSV local)."""
+    """Busca candles BTC/USDT 4h — tenta 3 fontes em cascata."""
+    params = {"symbol": "BTCUSDT", "interval": "4h", "limit": 500}
+
+    # Fonte 1: Binance principal
     try:
-        url = "https://api.binance.com/api/v3/klines"
-        params = {"symbol": "BTCUSDT", "interval": "4h", "limit": 500}
-        resp = requests.get(url, params=params, timeout=10)
+        resp = requests.get("https://api.binance.com/api/v3/klines", params=params, timeout=10)
         resp.raise_for_status()
-        raw = resp.json()
-        df = pd.DataFrame(raw, columns=[
-            "timestamp", "open", "high", "low", "close", "volume",
-            "close_time", "quote_volume", "trades", "taker_buy_base",
-            "taker_buy_quote", "ignore"
-        ])
+        return _parse_binance_klines(resp.json())
+    except Exception as e:
+        print(f"[WARN] Binance principal falhou: {e}")
+
+    # Fonte 2: Binance data mirror (mais permissivo para cloud)
+    try:
+        resp = requests.get("https://data-api.binance.vision/api/v3/klines", params=params, timeout=10)
+        resp.raise_for_status()
+        return _parse_binance_klines(resp.json())
+    except Exception as e:
+        print(f"[WARN] Binance mirror falhou: {e}")
+
+    # Fonte 3: CoinGecko — não bloqueia IPs de cloud
+    try:
+        resp = requests.get(
+            "https://api.coingecko.com/api/v3/coins/bitcoin/ohlc",
+            params={"vs_currency": "usd", "days": "90"},
+            timeout=15
+        )
+        resp.raise_for_status()
+        raw = resp.json()  # [[timestamp_ms, open, high, low, close], ...]
+        df = pd.DataFrame(raw, columns=["timestamp", "open", "high", "low", "close"])
         df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms")
-        for col in ["open", "high", "low", "close", "volume"]:
-            df[col] = df[col].astype(float)
+        df["volume"] = 0.0
         return df.sort_values("timestamp").reset_index(drop=True)
     except Exception as e:
-        print(f"[ERRO] carregar_dados_btc: {e}")
+        print(f"[ERRO] Todas as fontes falharam: {e}")
         return pd.DataFrame()
 
 
