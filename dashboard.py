@@ -118,6 +118,63 @@ def calcular_atr(df, periodo=14):
     return tr.rolling(window=periodo).mean()
 
 
+def buscar_freqtrade_status():
+    """
+    Busca o status do Freqtrade via API REST.
+    Lê a URL base da variável de ambiente FREQTRADE_URL (Railway)
+    ou usa o padrão localhost:8081 em desenvolvimento local.
+    Retorna dict com dados ou None se Freqtrade estiver offline.
+    """
+    url_base = os.environ.get("FREQTRADE_URL", "http://localhost:8081")
+    auth = ("freqtrade", "safetrading123")
+    resultado = {}
+
+    try:
+        # Status geral do bot
+        resp_status = requests.get(
+            f"{url_base}/api/v1/status",
+            auth=auth,
+            timeout=5,
+        )
+        if resp_status.status_code == 200:
+            resultado["trades_abertos"] = resp_status.json()
+        else:
+            resultado["trades_abertos"] = []
+
+        # Balanço / capital atual
+        resp_balance = requests.get(
+            f"{url_base}/api/v1/balance",
+            auth=auth,
+            timeout=5,
+        )
+        if resp_balance.status_code == 200:
+            resultado["balance"] = resp_balance.json()
+
+        # P&L do dia (profit)
+        resp_profit = requests.get(
+            f"{url_base}/api/v1/profit",
+            auth=auth,
+            timeout=5,
+        )
+        if resp_profit.status_code == 200:
+            resultado["profit"] = resp_profit.json()
+
+        # Informações do bot (estratégia ativa, modo, etc.)
+        resp_show = requests.get(
+            f"{url_base}/api/v1/show_config",
+            auth=auth,
+            timeout=5,
+        )
+        if resp_show.status_code == 200:
+            resultado["config"] = resp_show.json()
+
+        resultado["online"] = True
+        return resultado
+
+    except Exception:
+        return None
+
+
 def buscar_preco_btc():
     """Busca preço atual do BTC/USDT na API pública da Binance."""
     try:
@@ -978,6 +1035,7 @@ app.layout = html.Div(
                         dcc.Tab(label="📊 Histórico de Backtests", value="backtests", style=ESTILO_TAB, selected_style=ESTILO_TAB_SELECIONADA),
                         dcc.Tab(label="📈 BTC ao Vivo + Sinais", value="btc_live", style=ESTILO_TAB, selected_style=ESTILO_TAB_SELECIONADA),
                         dcc.Tab(label="🤖 Paper Trading", value="paper", style=ESTILO_TAB, selected_style=ESTILO_TAB_SELECIONADA),
+                        dcc.Tab(label="⚡ Freqtrade Live", value="freqtrade", style=ESTILO_TAB, selected_style=ESTILO_TAB_SELECIONADA),
                     ],
                 ),
                 html.Div(id="conteudo-aba"),
@@ -1135,7 +1193,147 @@ def renderizar_aba(aba, n_preco, n_paper):
             conteudo,
         ])
 
+    elif aba == "freqtrade":
+        return criar_conteudo_freqtrade()
+
     return html.Div()
+
+
+def criar_conteudo_freqtrade():
+    """
+    Cria o conteúdo da aba Freqtrade Live.
+    Consome a API REST do Freqtrade (dry-run) rodando localmente ou no Railway.
+    Exibe: status do bot, trades abertos, P&L e capital atual.
+    Degrada graciosamente se o Freqtrade estiver offline.
+    """
+    dados = buscar_freqtrade_status()
+
+    # --- Freqtrade offline: exibe mensagem amigável ---
+    if not dados:
+        return html.Div([
+            html.H5("Freqtrade Live", style={"color": COR_TEXTO, "marginBottom": "8px"}),
+            dbc.Alert(
+                [
+                    html.Strong("Freqtrade offline "),
+                    html.Span("— o bot não está respondendo na porta configurada."),
+                    html.Hr(),
+                    html.P([
+                        "Para iniciar localmente: ",
+                        html.Code("cd freqtrade && docker-compose up -d", style={"backgroundColor": "#21262d", "padding": "2px 6px", "borderRadius": "4px"}),
+                    ], className="mb-1"),
+                    html.P([
+                        "No Railway: configure a variável ",
+                        html.Code("FREQTRADE_URL", style={"backgroundColor": "#21262d", "padding": "2px 6px", "borderRadius": "4px"}),
+                        " com a URL do serviço Freqtrade.",
+                    ], className="mb-0"),
+                ],
+                color="secondary",
+                style={"backgroundColor": COR_CARD, "border": f"1px solid {COR_BORDA}", "color": COR_TEXTO, "fontFamily": "monospace", "fontSize": "13px"},
+            ),
+        ])
+
+    # --- Freqtrade online: extrai dados ---
+    config = dados.get("config", {})
+    profit = dados.get("profit", {})
+    balance = dados.get("balance", {})
+    trades_abertos = dados.get("trades_abertos", [])
+
+    estrategia = config.get("strategy", "—")
+    dry_run = config.get("dry_run", True)
+    modo_label = "DRY RUN (paper)" if dry_run else "LIVE (capital real)"
+    modo_cor = COR_LARANJA if dry_run else COR_VERMELHO
+
+    # P&L
+    profit_total = profit.get("profit_all_coin", 0.0)
+    profit_dia = profit.get("profit_factor", 0.0)
+    total_trades = profit.get("trade_count", 0)
+    wins = profit.get("winning_trades", 0)
+    losses = profit.get("losing_trades", 0)
+    win_rate = (wins / total_trades * 100) if total_trades > 0 else 0.0
+
+    # Capital
+    capital_total = balance.get("total", 0.0)
+    capital_livre = balance.get("free", 0.0)
+    moeda = balance.get("symbol", "USDT")
+
+    cor_profit = COR_VERDE if profit_total >= 0 else COR_VERMELHO
+    sinal = "+" if profit_total >= 0 else ""
+
+    # Cards de resumo
+    cards = dbc.Row([
+        dbc.Col(dbc.Card(dbc.CardBody([
+            html.P("Modo", style={"color": COR_TEXTO_SECUNDARIO, "fontSize": "11px", "textTransform": "uppercase", "letterSpacing": "1px", "marginBottom": "4px"}),
+            html.H5(modo_label, style={"color": modo_cor, "fontFamily": "monospace", "fontSize": "13px"}),
+        ]), style={"backgroundColor": COR_CARD, "border": f"1px solid {modo_cor}33", "borderRadius": "8px"}), width=3),
+
+        dbc.Col(dbc.Card(dbc.CardBody([
+            html.P("Estratégia", style={"color": COR_TEXTO_SECUNDARIO, "fontSize": "11px", "textTransform": "uppercase", "letterSpacing": "1px", "marginBottom": "4px"}),
+            html.H5(estrategia, style={"color": COR_AZUL, "fontFamily": "monospace", "fontSize": "13px"}),
+        ]), style={"backgroundColor": COR_CARD, "border": f"1px solid {COR_AZUL}33", "borderRadius": "8px"}), width=3),
+
+        dbc.Col(dbc.Card(dbc.CardBody([
+            html.P(f"Capital ({moeda})", style={"color": COR_TEXTO_SECUNDARIO, "fontSize": "11px", "textTransform": "uppercase", "letterSpacing": "1px", "marginBottom": "4px"}),
+            html.H5(f"{capital_total:.2f}", style={"color": COR_TEXTO, "fontFamily": "monospace"}),
+            html.P(f"Livre: {capital_livre:.2f}", style={"color": COR_CINZA, "fontSize": "11px", "marginTop": "-4px"}),
+        ]), style={"backgroundColor": COR_CARD, "border": f"1px solid {COR_BORDA}", "borderRadius": "8px"}), width=3),
+
+        dbc.Col(dbc.Card(dbc.CardBody([
+            html.P("P&L Total", style={"color": COR_TEXTO_SECUNDARIO, "fontSize": "11px", "textTransform": "uppercase", "letterSpacing": "1px", "marginBottom": "4px"}),
+            html.H5(f"{sinal}{profit_total:.4f} {moeda}", style={"color": cor_profit, "fontFamily": "monospace", "fontSize": "13px"}),
+            html.P(f"{total_trades} trades | Win: {win_rate:.1f}%", style={"color": COR_CINZA, "fontSize": "11px", "marginTop": "-4px"}),
+        ]), style={"backgroundColor": COR_CARD, "border": f"1px solid {cor_profit}33", "borderRadius": "8px"}), width=3),
+    ], className="mb-4")
+
+    # Trades abertos
+    if trades_abertos:
+        linhas_trades = []
+        for t in trades_abertos:
+            pnl = t.get("profit_pct", 0.0) * 100
+            cor_t = COR_VERDE if pnl >= 0 else COR_VERMELHO
+            linhas_trades.append({
+                "Par": t.get("pair", "—"),
+                "Entrada": f"${t.get('open_rate', 0):,.2f}",
+                "Atual": f"${t.get('current_rate', 0):,.2f}",
+                "P&L %": f"{'+' if pnl >= 0 else ''}{pnl:.2f}%",
+                "Abertura": str(t.get("open_date", "—"))[:16],
+            })
+
+        tabela_trades = dash_table.DataTable(
+            columns=[{"name": k, "id": k} for k in linhas_trades[0].keys()],
+            data=linhas_trades,
+            style_table={"overflowX": "auto", "borderRadius": "8px"},
+            style_header={"backgroundColor": "#1c2128", "color": COR_TEXTO, "fontWeight": "bold", "border": f"1px solid {COR_BORDA}", "fontFamily": "monospace", "fontSize": "12px"},
+            style_cell={"backgroundColor": COR_CARD, "color": COR_TEXTO, "border": f"1px solid {COR_BORDA}", "fontFamily": "monospace", "fontSize": "12px", "padding": "8px 12px"},
+            style_data_conditional=[
+                {"if": {"filter_query": '{P&L %} contains "+"'}, "color": COR_VERDE},
+                {"if": {"filter_query": '{P&L %} contains "-"'}, "color": COR_VERMELHO},
+            ],
+        )
+        secao_trades = html.Div([
+            html.H6(f"Trades Abertos ({len(trades_abertos)})", style={"color": COR_TEXTO, "marginBottom": "12px"}),
+            tabela_trades,
+        ])
+    else:
+        secao_trades = dbc.Card(
+            dbc.CardBody(html.P("Nenhum trade aberto no momento.", style={"color": COR_CINZA, "fontStyle": "italic", "marginBottom": "0"})),
+            style={"backgroundColor": COR_CARD, "border": f"1px solid {COR_BORDA}", "borderRadius": "8px"},
+        )
+
+    return html.Div([
+        html.H5("Freqtrade Live", style={"color": COR_TEXTO, "marginBottom": "4px"}),
+        html.P(
+            "Conexão via API REST do Freqtrade | Dry-run (paper trading) | Atualiza com a página",
+            style={"color": COR_CINZA, "fontSize": "12px", "marginBottom": "20px"},
+        ),
+        dbc.Alert(
+            "Bot online — dry-run ativo",
+            color="success",
+            style={"backgroundColor": "rgba(0,255,136,0.1)", "border": f"1px solid {COR_VERDE}55",
+                   "color": COR_VERDE, "fontFamily": "monospace", "fontSize": "12px", "padding": "8px 16px"},
+        ),
+        cards,
+        secao_trades,
+    ])
 
 
 # =============================================================================

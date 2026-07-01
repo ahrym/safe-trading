@@ -98,6 +98,90 @@ Não é necessário configurar nada — roda automaticamente com o app.
 
 ---
 
+---
+
+## Freqtrade no Railway (segundo serviço)
+
+O Freqtrade roda como um **serviço separado** no Railway, usando a imagem Docker oficial.
+O dashboard Dash consome a API REST do Freqtrade via variável `FREQTRADE_URL`.
+
+### Passo 1 — Criar segundo serviço no Railway
+
+1. No painel do Railway, clique em **New** > **Docker Image**
+2. Imagem: `freqtradeorg/freqtrade:stable`
+3. Nome do serviço: `freqtrade`
+
+### Passo 2 — Configurar variáveis de ambiente do Freqtrade
+
+No serviço `freqtrade`, em **Variables**:
+
+| Variável | Valor |
+|---|---|
+| `FREQTRADE__DRY_RUN` | `true` |
+| `FREQTRADE__DRY_RUN_WALLET` | `1000` |
+| `FREQTRADE__API_SERVER__ENABLED` | `true` |
+| `FREQTRADE__API_SERVER__USERNAME` | `freqtrade` |
+| `FREQTRADE__API_SERVER__PASSWORD` | `safetrading123` |
+| `FREQTRADE__API_SERVER__JWT_SECRET_KEY` | `safe-trading-2026` |
+
+### Passo 3 — Montar config.json e estratégias
+
+O Freqtrade no Railway precisa dos arquivos de estratégia. Opções:
+
+**Opção A (recomendada):** criar repositório separado `safe-trading-freqtrade` contendo:
+```
+config.json
+strategies/
+    EMAClassica.py
+    EMAComFiltro.py
+user_data/
+    data/
+    logs/
+```
+E deployar via **GitHub Repo** em vez de Docker Image.
+
+**Opção B:** usar Volume do Railway para montar os arquivos.
+
+### Passo 4 — Conectar o Dashboard ao Freqtrade
+
+No serviço do **dashboard** (Dash), adicionar variável:
+
+| Variável | Valor |
+|---|---|
+| `FREQTRADE_URL` | URL interna do serviço Railway (ex.: `http://freqtrade.railway.internal:8081`) |
+
+O Railway fornece DNS interno entre serviços do mesmo projeto.
+Se usar domínio público: `https://freqtrade-production.up.railway.app`
+
+### Comando de inicialização do Freqtrade no Railway
+
+```
+trade --logfile /freqtrade/user_data/logs/freqtrade.log --config /freqtrade/config.json --strategy EMAClassica
+```
+
+### Rodar localmente (desenvolvimento)
+
+```bash
+cd freqtrade
+docker-compose up -d
+
+# Ver logs
+docker-compose logs -f
+
+# Testar API
+curl -u freqtrade:safetrading123 http://localhost:8081/api/v1/ping
+
+# Parar
+docker-compose down
+```
+
+### Mudar estratégia ativa (S1 → S2)
+
+Edite `freqtrade/docker-compose.yml` e troque `--strategy EMAClassica` por `--strategy EMAComFiltro`.
+Reinicie: `docker-compose down && docker-compose up -d`
+
+---
+
 ## Troubleshooting
 
 **Build falha:** verifique se o `Dockerfile` está na raiz do projeto.

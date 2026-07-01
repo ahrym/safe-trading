@@ -1,0 +1,41 @@
+version: '3'
+
+# =============================================================================
+# Safe Trading — Freqtrade em dry-run (paper trading)
+# Roda localmente via Docker. NÃO usa capital real.
+# Estratégia padrão: EMAClassica (S1)
+# API REST disponível em http://localhost:8081
+#
+# Comandos:
+#   Iniciar S1:  docker-compose up -d
+#   Iniciar S2:  docker-compose -f docker-compose.yml -f docker-compose.s2.yml up -d
+#   Logs:        docker-compose logs -f
+#   Parar:       docker-compose down
+#   Status API:  curl http://freqtrade:safetrading123@localhost:8081/api/v1/ping
+# =============================================================================
+
+services:
+  freqtrade:
+    image: freqtradeorg/freqtrade:stable
+    restart: unless-stopped
+
+    # Monta as pastas locais dentro do container
+    volumes:
+      - ./user_data:/freqtrade/user_data
+      - ./strategies:/freqtrade/user_data/strategies
+      - ./config.json:/freqtrade/config.json
+
+    # API REST disponível no host
+    ports:
+      - "8081:8081"
+
+    # Comando de inicialização: modo trade (paper) com estratégia S1
+    command: >
+      trade
+      --logfile /freqtrade/user_data/logs/freqtrade.log
+      --config /freqtrade/config.json
+      --strategy EMAClassica
+
+    # Variáveis de ambiente (sobrescrevem config.json se necessário)
+    environment:
+      - FREQTRADE__BOT_NAME=safe-trading-bot
