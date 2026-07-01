@@ -33,11 +33,5 @@ python-dotenv>=1.0.0
 # Acesso a exchanges de criptomoedas (Binance, etc.) — usado nos scripts de backtest
 ccxt>=4.0.0
 
-# Indicadores técnicos para pandas (EMA, RSI, MACD, etc.)
-pandas-ta>=0.3.14b
-
 # Operações numéricas de alta performance
 numpy>=1.24.0
-
-# Notebooks interativos para exploração de dados
-jupyter>=1.0.0
