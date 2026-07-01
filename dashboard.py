@@ -190,12 +190,22 @@ def buscar_preco_btc():
 
 
 def carregar_dados_btc():
-    """Carrega o CSV de dados históricos BTC/USDT 4h."""
-    caminho = os.path.join(DIRETORIO_DATA, "btc_usdt_4h.csv")
+    """Busca candles BTC/USDT 4h direto da Binance (sem CSV local)."""
     try:
-        df = pd.read_csv(caminho, parse_dates=["timestamp"])
-        df = df.sort_values("timestamp").reset_index(drop=True)
-        return df
+        url = "https://api.binance.com/api/v3/klines"
+        params = {"symbol": "BTCUSDT", "interval": "4h", "limit": 500}
+        resp = requests.get(url, params=params, timeout=10)
+        resp.raise_for_status()
+        raw = resp.json()
+        df = pd.DataFrame(raw, columns=[
+            "timestamp", "open", "high", "low", "close", "volume",
+            "close_time", "quote_volume", "trades", "taker_buy_base",
+            "taker_buy_quote", "ignore"
+        ])
+        df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms")
+        for col in ["open", "high", "low", "close", "volume"]:
+            df[col] = df[col].astype(float)
+        return df.sort_values("timestamp").reset_index(drop=True)
     except Exception:
         return pd.DataFrame()
 

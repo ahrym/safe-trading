@@ -1,0 +1,11 @@
+# Configuração de deploy do Freqtrade no Railway
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "freqtrade/Dockerfile"
+
+[deploy]
+startCommand = "freqtrade trade --config /freqtrade/config.json --strategy EMAClassica"
+# Nota: /api/v1/ping requer autenticação Basic no Freqtrade.
+# Railway usará TCP check automaticamente (sem healthcheckPath).
+# Se quiser reativar, configure um proxy ou desabilite auth no ping endpoint.
+restartPolicyType = "ON_FAILURE"

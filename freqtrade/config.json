@@ -63,6 +63,7 @@
         "username": "freqtrade",
         "password": "safetrading123"
     },
+    "logfile": "/freqtrade/user_data/logs/freqtrade.log",
     "bot_name": "safe-trading-bot",
     "initial_state": "running",
     "force_entry_enable": false,
