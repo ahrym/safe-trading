@@ -1,0 +1,13 @@
+# Cabe numa GPU de 32 GB (RunPod: RTX 5090).
+# A folga extra vira contexto maior ou quantização melhor.
+qwen3:32b            # (~20 GB) denso, o mais "inteligente" da família nessa faixa
+gemma3:27b           # (~17 GB) geral + visão
+qwen3:30b            # (~19 GB)
+qwen3-coder:30b      # (~19 GB)
+mistral-small3.2:24b # (~15 GB)
+gpt-oss:20b          # (~14 GB)
+
+# Famílias mais novas (Qwen 3.6, Gemma 4...) — confira a tag exata em
+# https://ollama.com/library antes de descomentar:
+# qwen3.6:35b-a3b
+# gemma4:31b

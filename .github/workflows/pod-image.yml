@@ -1,0 +1,34 @@
+# Constrói a imagem do pod e publica em ghcr.io/<dono>/<repo>/pod
+# É essa imagem que o template do RunPod usa.
+name: imagem-do-pod
+
+on:
+  push:
+    branches: [main]
+    paths: ["pod/**", ".github/workflows/pod-image.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: pod
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}/pod:latest
+            ghcr.io/${{ github.repository }}/pod:${{ github.sha }}

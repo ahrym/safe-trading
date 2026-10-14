@@ -1,0 +1,22 @@
+{
+	admin off
+	auto_https off
+}
+
+:{$PORTA:8080} {
+	@semtoken not header Authorization "Bearer {$POD_TOKEN}"
+
+	handle /health {
+		respond "ok" 200
+	}
+
+	handle {
+		respond @semtoken "unauthorized" 401
+		reverse_proxy 127.0.0.1:11434 {
+			# O Ollama recusa Host que não seja local quando escuta em 127.0.0.1
+			header_up Host 127.0.0.1:11434
+			# Streaming ndjson/SSE sem buffer
+			flush_interval -1
+		}
+	}
+}

@@ -1,0 +1,60 @@
+# Gateway LiteLLM — uma URL e uma chave pra todos os modelos.
+# API compatível com OpenAI: qualquer app/SDK que fala com OpenAI fala com o quartel.
+#
+# Pra adicionar um modelo: 1) coloque a tag do Ollama em pod/perfis/*.txt
+#                          2) adicione um bloco aqui com o nome que os apps vão usar.
+# Um modelo listado aqui mas não baixado no pod responde erro 404 do Ollama.
+
+model_list:
+  # --- teste em CPU (perfil dev) ---
+  - model_name: teste
+    litellm_params: { model: openai/qwen3:0.6b, api_base: os.environ/POD_URL, api_key: os.environ/POD_TOKEN }
+
+  # --- cabem em 16 GB ---
+  - model_name: gpt-oss-20b
+    litellm_params: { model: openai/gpt-oss:20b, api_base: os.environ/POD_URL, api_key: os.environ/POD_TOKEN }
+  - model_name: qwen3-14b
+    litellm_params: { model: openai/qwen3:14b, api_base: os.environ/POD_URL, api_key: os.environ/POD_TOKEN }
+  - model_name: gemma3-12b
+    litellm_params: { model: openai/gemma3:12b, api_base: os.environ/POD_URL, api_key: os.environ/POD_TOKEN }
+  - model_name: qwen2.5-coder-14b
+    litellm_params: { model: openai/qwen2.5-coder:14b, api_base: os.environ/POD_URL, api_key: os.environ/POD_TOKEN }
+
+  # --- cabem em 24 GB ---
+  - model_name: qwen3-30b
+    litellm_params: { model: openai/qwen3:30b, api_base: os.environ/POD_URL, api_key: os.environ/POD_TOKEN }
+  - model_name: qwen3-coder-30b
+    litellm_params: { model: openai/qwen3-coder:30b, api_base: os.environ/POD_URL, api_key: os.environ/POD_TOKEN }
+  - model_name: mistral-small-24b
+    litellm_params: { model: openai/mistral-small3.2:24b, api_base: os.environ/POD_URL, api_key: os.environ/POD_TOKEN }
+  - model_name: devstral-24b
+    litellm_params: { model: openai/devstral:24b, api_base: os.environ/POD_URL, api_key: os.environ/POD_TOKEN }
+
+  # --- cabem em 32 GB ---
+  - model_name: qwen3-32b
+    litellm_params: { model: openai/qwen3:32b, api_base: os.environ/POD_URL, api_key: os.environ/POD_TOKEN }
+  - model_name: gemma3-27b
+    litellm_params: { model: openai/gemma3:27b, api_base: os.environ/POD_URL, api_key: os.environ/POD_TOKEN }
+
+router_settings:
+  # Apelidos por função: os apps pedem "geral"/"codigo"/"visao" e você troca
+  # o modelo por trás aqui, sem mexer nos apps.
+  model_group_alias:
+    geral: qwen3-30b
+    codigo: qwen3-coder-30b
+    visao: mistral-small-24b
+    rapido: qwen3-14b
+  num_retries: 1
+  # Se o modelo grande falhar, tenta um menor no mesmo pod.
+  fallbacks:
+    - qwen3-32b: [qwen3-30b]
+    - qwen3-30b: [qwen3-14b]
+    - qwen3-coder-30b: [qwen2.5-coder-14b]
+
+litellm_settings:
+  # Primeira chamada a um modelo inclui carregar ele na VRAM (pode levar ~1 min).
+  request_timeout: 600
+  drop_params: true
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY

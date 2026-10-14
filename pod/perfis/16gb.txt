@@ -1,0 +1,6 @@
+# Cabe numa GPU de 16 GB (RunPod: RTX A4000 / RTX 4000 Ada).
+# Tamanho aproximado em Q4 entre parênteses. Detalhes em docs/modelos.md.
+gpt-oss:20b          # (~14 GB) raciocínio geral, MoE, rápido
+qwen3:14b            # (~9 GB)  geral, PT-BR bom, tool calling
+gemma3:12b           # (~8 GB)  visão (imagens)
+qwen2.5-coder:14b    # (~9 GB)  código

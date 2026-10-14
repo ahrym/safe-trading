@@ -1,0 +1,2 @@
+# Modelo minúsculo pra testar o encanamento em CPU (docker compose local).
+qwen3:0.6b

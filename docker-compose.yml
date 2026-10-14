@@ -1,0 +1,36 @@
+# Roda o quartel inteiro na sua máquina.
+#   Sem GPU (teste do encanamento): PERFIL=dev docker compose up --build
+#   Com GPU NVIDIA (PC futuro):     descomente o bloco "deploy" e use PERFIL=16gb|24gb|32gb
+#
+# Pra usar o gateway local apontando pro pod do RunPod, rode só o gateway:
+#   POD_URL=https://<pod-id>-8080.proxy.runpod.net/v1 docker compose up --build gateway
+
+services:
+  pod:
+    build: ./pod
+    environment:
+      POD_TOKEN: ${POD_TOKEN:?defina POD_TOKEN no .env}
+      PERFIL: ${PERFIL:-dev}
+    volumes:
+      - ollama:/root/.ollama
+    ports:
+      - "8080:8080"
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+  gateway:
+    build: ./gateway
+    environment:
+      LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY:?defina LITELLM_MASTER_KEY no .env}
+      POD_URL: ${POD_URL:-http://pod:8080/v1}
+      POD_TOKEN: ${POD_TOKEN}
+    ports:
+      - "4000:4000"
+
+volumes:
+  ollama:
